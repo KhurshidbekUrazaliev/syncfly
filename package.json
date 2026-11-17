@@ -1,1 +1,24 @@
-{"name":"syncfly","version":"0.1.0","private":true,"type":"module","scripts":{"start":"node server.mjs","dev":"node server.mjs","test":"node --test test/*.test.mjs","check":"node --check server.mjs && node --check dist/app.js"},"engines":{"node":">=20"}}
+{
+  "name": "syncfly",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check server.mjs && node --check dist/app.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "description": "Self-hosted project management for coding agents.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KhurshidbekUrazaliev/syncfly.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KhurshidbekUrazaliev/syncfly/issues"
+  },
+  "homepage": "https://github.com/KhurshidbekUrazaliev/syncfly#readme"
+}
