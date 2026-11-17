@@ -1,0 +1,10 @@
+FROM node:22-bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends git curl ca-certificates python3 make g++ util-linux && rm -rf /var/lib/apt/lists/*
+RUN npm install -g @anthropic-ai/claude-code @openai/codex @google/gemini-cli
+# Install the official Cursor CLI at build time; copy its self-contained distribution.
+RUN curl -fsSL https://cursor.com/install -o /tmp/cursor-install.sh && bash /tmp/cursor-install.sh && cp -a /root/.local /opt/cursor && chmod -R a+rX /opt/cursor && rm /tmp/cursor-install.sh
+RUN ln -s /opt/cursor/share/cursor-agent/versions/$(ls /opt/cursor/share/cursor-agent/versions | head -n 1)/cursor-agent /usr/local/bin/agent
+RUN usermod -l agent node && usermod -d /home/agent agent && mkdir -p /home/agent /workspace && chown -R 1000:1000 /home/agent /workspace
+ENV HOME=/home/agent
+WORKDIR /workspace
+USER 1000:1000

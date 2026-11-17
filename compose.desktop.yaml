@@ -1,0 +1,62 @@
+# Docker Desktop with Linux containers. Tailscale is optional private access.
+name: syncfly
+services:
+  runner-image:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner
+    image: relay-runner:latest
+    entrypoint: ["true"]
+  relay:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      runner-image:
+        condition: service_completed_successfully
+    environment:
+      RELAY_PUBLIC_URL: ${RELAY_PUBLIC_URL:-http://localhost:4310}
+      RELAY_HOST_DATA_DIR: ${RELAY_HOST_DATA_DIR:?Run scripts/windows.ps1 first}
+      RELAY_INVITE_CODE: ${RELAY_INVITE_CODE:?Generate local configuration first}
+      RELAY_ALLOW_SIGNUP: ${RELAY_ALLOW_SIGNUP:-false}
+      RELAY_MAX_ACTIVE_TASKS: ${RELAY_MAX_ACTIVE_TASKS:-1}
+    mem_limit: 512m
+    cpus: 1
+    ports:
+      - "127.0.0.1:4310:4310"
+    volumes:
+      - syncfly_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4310/readyz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+  tailscale:
+    image: tailscale/tailscale:v1.104.7
+    profiles: [private]
+    restart: unless-stopped
+    network_mode: service:relay
+    depends_on: [relay]
+    environment:
+      TS_HOSTNAME: syncfly
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "true"
+      TS_AUTH_ONCE: "true"
+      TS_ACCEPT_DNS: "false"
+    volumes:
+      - tailscale_state:/var/lib/tailscale
+    mem_limit: 256m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "2"}
+volumes:
+  syncfly_data:
+    external: true
+    name: syncfly_data
+  tailscale_state:

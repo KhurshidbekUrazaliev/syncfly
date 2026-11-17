@@ -1,0 +1,37 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { mkdtemp } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
+test('HTTP workspace authentication, isolation, task validation and persistence',async t=>{
+ const dir=await mkdtemp(path.join(os.tmpdir(),'relay-http-'));const port=4397;
+ const child=spawn(process.execPath,['server.mjs'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:String(port),RELAY_DATA_DIR:dir,RELAY_EXECUTION:'docker',RELAY_ALLOW_SIGNUP:'true',RELAY_INVITE_CODE:'test-invite-only'},stdio:['ignore','pipe','pipe']});
+ t.after(()=>child.kill());
+ await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Server start timeout')),10000);child.stdout.once('data',()=>{clearTimeout(timer);resolve();});child.once('exit',code=>{clearTimeout(timer);reject(new Error('Server exited '+code));});});
+ const base=`http://127.0.0.1:${port}`;
+ const call=async(url,method='GET',body,cookie='',csrf='')=>{const r=await fetch(base+url,{method,headers:{'Content-Type':'application/json',cookie,'X-Relay-Token':csrf},body:body?JSON.stringify(body):undefined});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')?.split(';')[0]};};
+ assert.equal((await call('/api/state')).status,401);
+ assert.equal((await call('/healthz')).status,200);
+ const readiness=await call('/readyz');assert.ok([200,503].includes(readiness.status));
+ assert.equal((await call('/api/auth/register','POST',{name:'No invite',email:'no@example.test',password:'test-only-password-123'})).status,403);
+ assert.equal((await fetch(base+'/logo.svg')).status,200); // unauthenticated errors must not crash server
+ const a=await call('/api/auth/register','POST',{name:'Test A',email:'a@example.test',password:'test-only-password-123',invitation:'test-invite-only'});assert.equal(a.status,200);assert.ok(a.cookie);
+ let st=await call('/api/state','GET',null,a.cookie);assert.equal(st.status,200);const token=st.data.csrf;
+ assert.equal((await call('/api/projects','POST',{name:'Denied'},a.cookie)).status,403);
+ const p=await call('/api/projects','POST',{name:'Project A',context:'Shared context'},a.cookie,token);assert.equal(p.status,200);
+ const task=await call('/api/tasks','POST',{title:'Research',projectId:p.data.id,provider:'gemini'},a.cookie,token);assert.equal(task.status,201);
+ assert.equal((await call(`/api/tasks/${task.data.id}/run`,'POST',{},a.cookie,token)).status,400);
+ assert.equal((await call(`/api/tasks/${task.data.id}/approve`,'POST',{},a.cookie,token)).status,400);
+ assert.equal((await call(`/api/tasks/${task.data.id}`,'PATCH',{dependencies:[task.data.id]},a.cookie,token)).status,400);
+ assert.equal((await call('/api/state','GET',null,a.cookie)).data.tasks[0].dependencies.length,0);
+ const b=await call('/api/auth/register','POST',{name:'Test B',email:'b@example.test',password:'test-only-password-456',invitation:'test-invite-only'});assert.equal(b.status,200);
+ const bState=await call('/api/state','GET',null,b.cookie);assert.equal(bState.data.projects.length,0);
+ assert.equal((await call(`/api/tasks/${task.data.id}/run`,'POST',{},b.cookie,bState.data.csrf)).status,404);
+ assert.equal((await call('/api/auth/login','POST',{email:'a@example.test',password:'incorrect-password-123'})).status,401);
+ assert.equal((await call('/api/auth/logout','POST',{},a.cookie)).status,200);
+ assert.equal((await call('/api/state','GET',null,a.cookie)).status,401);
+ const login=await call('/api/auth/login','POST',{email:'a@example.test',password:'test-only-password-123'});assert.equal(login.status,200);
+ assert.equal((await call('/api/state','GET',null,login.cookie)).data.projects[0].name,'Project A');
+});

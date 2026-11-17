@@ -1,0 +1,22 @@
+services:
+  runner-image:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner
+    image: relay-runner:latest
+    entrypoint: ["true"]
+  relay:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      runner-image:
+        condition: service_completed_successfully
+    environment:
+      RELAY_PUBLIC_URL: ${RELAY_PUBLIC_URL:-http://localhost:4310}
+      RELAY_HOST_DATA_DIR: ${RELAY_HOST_DATA_DIR:?Set an absolute host data directory in .env}
+      RELAY_ALLOW_SIGNUP: ${RELAY_ALLOW_SIGNUP:-false}
+    ports:
+      - "127.0.0.1:4310:4310"
+    volumes:
+      - ${RELAY_HOST_DATA_DIR}:/data
+      - /var/run/docker.sock:/var/run/docker.sock

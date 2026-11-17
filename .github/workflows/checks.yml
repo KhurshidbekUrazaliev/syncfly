@@ -1,0 +1,31 @@
+name: Syncfly checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test && npm run check
+      - name: Validate desktop compose configuration
+        env:
+          RELAY_INVITE_CODE: ci-placeholder-not-a-secret
+          RELAY_HOST_DATA_DIR: /var/lib/docker/volumes/syncfly_data/_data
+        run: docker compose -f compose.desktop.yaml --profile private config --quiet
+  windows-script:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse the Windows launcher without starting Docker
+        shell: powershell
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'scripts/windows.ps1'), [ref]$tokens, [ref]$parseErrors
+          ) | Out-Null
+          if ($parseErrors.Count) { $parseErrors | Format-List; exit 1 }

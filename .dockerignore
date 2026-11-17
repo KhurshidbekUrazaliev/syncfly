@@ -1,0 +1,9 @@
+.runtime
+.git
+.openai
+node_modules
+.env
+.env.*
+*.zip
+*.log
+*.tar.gz
