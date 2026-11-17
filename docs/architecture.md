@@ -13,8 +13,8 @@ Syncfly is a Node.js HTTP service with a browser frontend and Docker-based task 
 | `Dockerfile.runner` | Provider CLIs and task dependencies. |
 | `compose.desktop.yaml` | Docker Desktop deployment and optional Tailscale service. |
 | `compose.yaml`, `compose.production.yaml` | Linux deployment and HTTPS proxy. |
-| `scripts/` | Windows launcher and Linux configuration/deployment scripts. |
-| `test/` | Backend and HTTP integration tests. |
+| `scripts/` | Windows and macOS launchers, release packaging, and Linux deployment scripts. |
+| `test/` | Backend, HTTP, browser, and launcher regression tests. |
 
 ## Task lifecycle
 
@@ -62,7 +62,7 @@ npm test
 npm run check
 ```
 
-Tests cover provider arguments, task validation, dependency constraints, shared task accounting, authentication, CSRF checks, user isolation, and mocked Gemini responses. CI also validates the desktop Compose configuration and parses the Windows launcher. Live provider authentication and end-to-end Windows deployment are outside the current automated coverage.
+Tests cover provider arguments, task validation, dependency constraints, shared task accounting, authentication, CSRF checks, user isolation, and mocked Gemini responses. CI checks signup, login, empty workspaces, and persistence in Chromium; tests launcher configuration and restart on Windows/macOS with a simulated Docker engine; and builds and starts the real Docker services on Linux. Live provider authentication and full Docker Desktop runs on Windows/macOS remain outside automated coverage. Browser tests use Playwright as a development dependency.
 
 ## Adding a provider
 
