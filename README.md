@@ -6,7 +6,7 @@ Self-hosted project management for coding agents. Assign tasks to Claude Code, C
 
 [![Checks](https://github.com/KhurshidbekUrazaliev/syncfly/actions/workflows/checks.yml/badge.svg)](https://github.com/KhurshidbekUrazaliev/syncfly/actions/workflows/checks.yml)
 
-[Windows setup](#run-on-your-windows-pc) · [Deployment](docs/deployment.md) · [Architecture](docs/architecture.md)
+[Downloads and setup](#download-and-run) · [Deployment](docs/deployment.md) · [Architecture](docs/architecture.md)
 
 ## Features
 
@@ -16,27 +16,24 @@ Self-hosted project management for coding agents. Assign tasks to Claude Code, C
 - Provider sign-in through official CLIs.
 - Gemini API integration for image generation and planning.
 
-## Run on your Windows PC
+## Download and run
 
-Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) with the WSL 2 backend and Linux containers, then start it. Use a supported Windows version with virtualization enabled and at least 8 GB of RAM.
+- [Windows download](https://github.com/KhurshidbekUrazaliev/syncfly/releases/latest/download/Syncfly-Windows.zip)
+- [macOS download](https://github.com/KhurshidbekUrazaliev/syncfly/releases/latest/download/Syncfly-macOS.zip)
+- [Release notes and checksums](https://github.com/KhurshidbekUrazaliev/syncfly/releases/latest)
 
-Clone the repository, or download and extract the ZIP from **Code → Download ZIP**:
+These packages run the backend in Docker and open the interface in your browser. They are not standalone native installers. No Node.js, Python, or Git installation is needed on your computer.
 
-```powershell
-git clone https://github.com/KhurshidbekUrazaliev/syncfly.git
-cd syncfly
-```
+1. Install and start Docker Desktop for [Windows](https://docs.docker.com/desktop/setup/install/windows-install/) or [Mac](https://docs.docker.com/desktop/setup/install/mac-install/). Windows needs the WSL 2 backend and Linux containers. Choose the Docker build for your Mac's processor.
+2. Download and **extract the entire ZIP** for your system.
+3. Open **Start Syncfly.cmd** on Windows or **Start Syncfly.command** on macOS. The first build downloads the agent tools and can take several minutes.
+4. Your browser opens with the setup code already supplied. Create your Syncfly account, then create a project and connect a provider. New workspaces are empty.
 
-In PowerShell, run:
+Keep Docker Desktop running while using Syncfly. Open **Stop Syncfly** to stop the containers without deleting your data. If macOS does not open the launcher, open Terminal in the extracted folder and run `bash scripts/macos.sh Start`. Windows can run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows.ps1` from the folder.
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows.ps1 -Action Start
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows.ps1 -Action Invitation
-```
+**Upgrading an earlier download:** stop the old copy, extract the new version, and copy your existing `.env.desktop` file into the new folder if present. Start the new launcher. It rebuilds the app and reuses the `syncfly_data` Docker volume. If you already created an account, sign in with it. Do not delete the volume.
 
-The first command builds and starts the containers. The second displays the invitation code for creating your account. Open [localhost:4310](http://localhost:4310), register, and connect a provider in **Connections**.
-
-The launcher stores configuration in `.env.desktop` and application data in a Docker volume. See the [deployment guide](docs/deployment.md) for private remote access, registration controls, storage, and Linux hosting.
+Accounts and projects belong to the installation on that computer. Downloading Syncfly on a second computer does not transfer your data. See [deployment](docs/deployment.md) for storage, private access, and server hosting.
 
 ## Providers
 
@@ -56,7 +53,7 @@ Syncfly is in early development and intended for trusted users on a single host.
 
 Tasks must be started manually. Approval marks a task complete; code changes must be reviewed and merged separately. Private Git repositories, automatic scheduling, password recovery, and spending limits are not implemented.
 
-CI covers backend tests, Compose configuration, and Windows launcher syntax. End-to-end Windows deployment and live provider sign-ins still need verification. See [execution and security](docs/architecture.md#execution-and-security) before deploying.
+CI checks account setup in Chromium, workspace persistence, both launchers with a simulated Docker engine, and a real Docker deployment on Linux. Full Docker Desktop runs on Windows/macOS and live provider sign-ins still require verification on the target computer. See [execution and security](docs/architecture.md#execution-and-security) before deploying.
 
 ## Development
 

@@ -1,16 +1,16 @@
 # Deployment
 
-Syncfly serves the frontend and API together. Use Docker Desktop on Windows or Docker Engine on a Linux server. Static hosting runs the interface with sample data only.
+Syncfly serves the frontend and API together. Use Docker Desktop on Windows or macOS, or Docker Engine on a Linux server. A static host displays download instructions because it cannot run the backend.
 
-## Windows
+## Windows and macOS
 
-Follow the [Windows quickstart](../README.md#run-on-your-windows-pc). The launcher uses Linux containers through Docker Desktop's WSL 2 backend. Node.js and Python are not required on the host for this setup.
+Follow the [desktop quickstart](../README.md#download-and-run). Windows uses Linux containers through Docker Desktop's WSL 2 backend; macOS uses Docker Desktop's Linux VM. Node.js and Python are not required on the host for this setup.
 
 `-ExecutionPolicy Bypass` applies to the PowerShell process running the launcher. It does not change the system policy. The initial build downloads the provider CLIs and may take several minutes.
 
 ### Configuration and storage
 
-The launcher creates `.env.desktop` with a random invitation code and restricts access to the current Windows user. This file is excluded from Git and Docker builds.
+The launcher creates `.env.desktop` with a random invitation code. Windows restricts it to the current user; macOS sets file permissions to `0600`. Start opens a setup URL with the code in the fragment. The browser removes the fragment immediately and uses the code only for registration; it is not sent in page requests. This file is excluded from Git and Docker builds.
 
 | Setting | Purpose |
 | --- | --- |
@@ -32,7 +32,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows.ps1 -Actio
 
 | Action | Result |
 | --- | --- |
-| `Start` | Build and start Syncfly. |
+| `Start` | Build and start Syncfly, then open account setup or sign-in. |
 | `Status` | Show container status. |
 | `Logs` | Show recent backend logs. |
 | `Stop` | Stop containers and retain stored data. |
@@ -41,6 +41,25 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows.ps1 -Actio
 | `CloseInvites` | Disable further registrations. |
 | `Private` | Configure private HTTPS access through Tailscale. |
 | `Local` | Stop remote access and restore the localhost origin. |
+
+On macOS, the same local management actions use:
+
+```sh
+bash scripts/macos.sh Status
+bash scripts/macos.sh OpenInvites
+bash scripts/macos.sh Invitation
+bash scripts/macos.sh CloseInvites
+```
+
+`Private` and `Local` are currently Windows launcher actions. The macOS package provides local access only; a server or separately configured private network is needed for remote use.
+
+### Account setup troubleshooting
+
+- **Invitation code required:** open the new Start Syncfly launcher instead of typing localhost manually. It supplies the code automatically. If you use a manually opened tab, use the `Invitation` action to retrieve the code.
+- **Registration closed:** an account already exists. Sign in with it, or ask the owner to run `OpenInvites` before creating another account.
+- **Still seeing the old example board:** stop the older copy, run Start from the new release folder, and reload the browser. No example projects or tasks are included in current releases. Old browser-only example data is discarded; server projects are preserved.
+- **Backend unavailable:** check Docker Desktop is running. Run `Status` or `Logs` for details, then run `Start` again.
+- **Wrong address:** use the URL printed by the launcher. If private access was enabled, sign in through its HTTPS address.
 
 ### Private remote access
 
@@ -103,7 +122,7 @@ Provider billing and usage limits apply independently of Syncfly. Run a small ta
 
 Back up configuration and application data before upgrades or host resets:
 
-- Windows: `.env.desktop`, `syncfly_data`, and the Tailscale state volume.
+- Desktop: `.env.desktop`, `syncfly_data`, and the Tailscale state volume.
 - Linux: `.env`, the configured host data directory, and Caddy's certificate volume.
 
 Backups contain provider credentials and should be encrypted and access-controlled. Stopping the containers retains their data; deleting Docker volumes removes it. Review the [execution and security model](architecture.md#execution-and-security) before adding users.

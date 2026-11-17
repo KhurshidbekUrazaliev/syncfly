@@ -1,0 +1,58 @@
+import { test, expect } from '@playwright/test';
+
+test('first launch creates a real empty workspace and persists a project across sign-ins',async({page},testInfo)=>{
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.goto('/');
+ await expect(page.getByRole('heading',{name:'Create your account'})).toBeVisible();
+ await expect(page.getByLabel('Invitation code')).toBeVisible();
+ await page.getByLabel('Your name').fill('Windows tester');
+ await page.getByLabel('Email',{exact:true}).fill('tester@example.test');
+ await page.getByLabel('Password',{exact:true}).fill('a-password-for-testing');
+ await page.getByLabel('Invitation code').fill('wrong-code');
+ await page.getByRole('button',{name:'Create account',exact:true}).click();
+ await expect(page.getByRole('alert')).toContainText('invitation code');
+ await page.goto('/#setup=browser-test-code');
+ await page.reload();
+ await expect(page.getByText('Setup code supplied by your launcher.')).toBeVisible();
+ expect(new URL(page.url()).hash).toBe('');
+ await page.getByLabel('Your name').fill('Windows tester');
+ await page.getByLabel('Email',{exact:true}).fill('tester@example.test');
+ await page.getByLabel('Password',{exact:true}).fill('a-password-for-testing');
+ await page.getByLabel('Password',{exact:true}).press('Enter');
+ await expect(page.getByRole('heading',{name:'Your workspace',exact:true})).toBeVisible();
+ await expect(page.locator('body')).not.toContainText('Launchpad website');
+ await expect(page.locator('[data-task]')).toHaveCount(0);
+ await page.screenshot({path:testInfo.outputPath('empty-workspace.png'),fullPage:true});
+ await page.reload();
+ await expect(page.getByRole('heading',{name:'Your workspace',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Create project',exact:true}).last().click();
+ await page.getByLabel('Project name',{exact:true}).fill('My actual project');
+ await page.getByRole('dialog').getByRole('button',{name:'Create project',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'My actual project'})).toBeVisible();
+ await page.getByRole('button',{name:'New task',exact:true}).click();
+ await page.getByLabel('Task title').fill('My first assignment');
+ await page.getByRole('dialog').getByRole('button',{name:'Create task',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'My first assignment'})).toBeVisible();
+ await page.getByRole('button',{name:'Sign out'}).click();
+ await expect(page.getByRole('heading',{name:'Sign in to Syncfly'})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Create an account',exact:true})).toHaveCount(0);
+ await page.getByLabel('Email',{exact:true}).fill('tester@example.test');
+ await page.getByLabel('Password',{exact:true}).fill('a-password-for-testing');
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'My actual project'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'My first assignment'})).toBeVisible();
+ await page.getByRole('button',{name:'Connections',exact:false}).first().click();
+ await expect(page.getByRole('heading',{name:'Gemini API',exact:true})).toBeVisible();
+ await page.screenshot({path:testInfo.outputPath('connections.png'),fullPage:true});
+ expect(errors).toEqual([]);
+});
+
+test('missing backend shows download and retry options, without example data',async({page})=>{
+ await page.route('**/api/**',route=>route.fulfill({status:404,contentType:'text/html',body:'Not found'}));
+ await page.goto('/');
+ await expect(page.getByRole('heading',{name:'Start Syncfly on your computer'})).toBeVisible();
+ await expect(page.getByRole('link',{name:'Windows download'})).toBeVisible();
+ await expect(page.getByRole('link',{name:'macOS download'})).toBeVisible();
+ await expect(page.locator('body')).not.toContainText('Launchpad website');
+ await expect(page.getByRole('button',{name:'Create account',exact:true})).toHaveCount(0);
+});

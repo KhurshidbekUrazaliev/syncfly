@@ -1,13 +1,14 @@
 {
   "name": "syncfly",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
     "dev": "node server.mjs",
     "test": "node --test test/*.test.mjs",
-    "check": "node --check server.mjs && node --check dist/app.js"
+    "check": "node --check server.mjs && node --check cloud.mjs && node --check dist/app.js && node --check dist/motion.js",
+    "test:browser": "playwright test"
   },
   "engines": {
     "node": ">=20"
@@ -20,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/KhurshidbekUrazaliev/syncfly/issues"
   },
-  "homepage": "https://github.com/KhurshidbekUrazaliev/syncfly#readme"
+  "homepage": "https://github.com/KhurshidbekUrazaliev/syncfly#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.65.1"
+  }
 }

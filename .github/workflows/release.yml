@@ -1,0 +1,22 @@
+name: Desktop downloads
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci && npm test && npm run check
+      - run: python3 scripts/package-desktop.py
+      - name: Publish Windows and macOS downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/Syncfly-Windows.zip release/Syncfly-macOS.zip release/SHA256SUMS.txt --title "Syncfly $GITHUB_REF_NAME" --notes-file docs/release-notes.md --verify-tag

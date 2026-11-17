@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [ValidateSet('Start', 'Status', 'Logs', 'Stop', 'Private', 'Local', 'OpenInvites', 'CloseInvites', 'Invitation')]
-    [string]$Action = 'Start'
+    [string]$Action = 'Start',
+    [switch]$NoBrowser
 )
 $ErrorActionPreference = 'Stop'
 Set-Location (Split-Path $PSScriptRoot -Parent)
@@ -73,7 +74,12 @@ if ($Action -eq 'Start') {
         Invoke-Compose -Arguments @('--profile', 'private', 'up', '-d', 'tailscale')
     }
     Write-Host "Syncfly is ready at $($settings.RELAY_PUBLIC_URL)"
-    Write-Host 'Run this script with -Action Invitation to see your private signup code.'
+    if (-not $NoBrowser) {
+        $setupUrl = "$($settings.RELAY_PUBLIC_URL)/#setup=$([Uri]::EscapeDataString($settings.RELAY_INVITE_CODE))"
+        Start-Process $setupUrl
+    }
+    Write-Host 'Your browser opens with the setup code filled in. Create your account there.'
+    Write-Host 'If you already have an account on this PC, sign in instead.'
     exit 0
 }
 if (-not (Test-Path $configFile)) { throw 'Run this script with -Action Start first.' }
