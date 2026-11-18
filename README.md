@@ -6,11 +6,11 @@ A project workspace for coordinating coding agents. Assign work, share context, 
 
 ## Downloads
 
-Syncfly 0.2.2 targets **Windows x64** and includes its own runtime. Docker is not required for the Windows desktop app.
+Syncfly 0.2.3 targets **Windows x64** and includes its own runtime. Docker is not required for the Windows desktop app.
 
-- [Windows installer](https://github.com/KhurshidbekUrazaliev/syncfly/releases/download/v0.2.2/Syncfly-Setup-0.2.2.exe)
-- [Windows portable app](https://github.com/KhurshidbekUrazaliev/syncfly/releases/download/v0.2.2/Syncfly-Portable-0.2.2.exe)
-- [Release notes and checksums](https://github.com/KhurshidbekUrazaliev/syncfly/releases/tag/v0.2.2)
+- [Windows installer](https://github.com/KhurshidbekUrazaliev/syncfly/releases/download/v0.2.3/Syncfly-Setup-0.2.3.exe)
+- [Windows portable app](https://github.com/KhurshidbekUrazaliev/syncfly/releases/download/v0.2.3/Syncfly-Portable-0.2.3.exe)
+- [Release notes and checksums](https://github.com/KhurshidbekUrazaliev/syncfly/releases/tag/v0.2.3)
 
 The earlier [macOS Docker package, version 0.2.0](https://github.com/KhurshidbekUrazaliev/syncfly/releases/download/v0.2.0/Syncfly-macOS.zip), remains available. It does not include the new Windows desktop integrations.
 

@@ -1,6 +1,6 @@
 # Syncfly for Windows
 
-Run `Syncfly-Setup-0.2.2.exe` to install Syncfly for your Windows user and create shortcuts, or run `Syncfly-Portable-0.2.2.exe` without installing. These packages are for Windows x64 and include the Node runtime and browser. Docker is not required.
+Run `Syncfly-Setup-0.2.3.exe` to install Syncfly for your Windows user and create shortcuts, or run `Syncfly-Portable-0.2.3.exe` without installing. These packages are for Windows x64 and include the Node runtime and browser. Docker is not required.
 
 Create your local account on first launch using your name, email, and a password of at least 12 characters. No invitation is needed. New accounts start with an empty workspace. Your workspace is saved under `%APPDATA%/Syncfly/workspace`, separately from the application, and survives upgrades. Existing browser-development data is not automatically migrated. Closing the app stops its backend and running agent processes; finish tasks before closing.
 
@@ -40,7 +40,7 @@ The desktop app supports up to ten starting or running tasks across local accoun
 
 ## Accounts and orchestration
 
-Version 0.2.2 plans substantial independent sections instead of sequential micro-tasks. Every coding worker can edit and test its own branch. Existing tasks identifiable as AI-generated assignments are upgraded so their old suggested ordering is advisory, including reassigned workers. Explicit prerequisites set through the new UI remain enforced. Use **Run settings → Make independent** to remove an unnecessary prerequisite, or change the account, model, or read-only setting. **Start ready workers** starts/retries eligible queued/failed workers concurrently, up to ten total slots. Cancelled tasks require an individual retry.
+Version 0.2.3 plans substantial independent sections instead of sequential micro-tasks. Every coding worker can edit and test its own branch. Existing tasks identifiable as AI-generated assignments are upgraded so their old suggested ordering is advisory, including reassigned workers. Explicit prerequisites set through the new UI remain enforced. Use **Run settings → Make independent** to remove an unnecessary prerequisite, or change the account, model, or read-only setting. **Start ready workers** starts/retries eligible queued/failed workers concurrently, up to ten total slots. Cancelled tasks require an individual retry.
 
 Claude defaults to Sonnet; an explicitly selected model overrides it. Credits and billing are provider-side requirements, shown as actionable errors rather than generic exit codes. Windows child agents use system certificate trust and do not inherit Codex desktop's private command-launcher environment.
 

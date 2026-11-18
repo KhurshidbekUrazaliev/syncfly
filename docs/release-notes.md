@@ -1,10 +1,10 @@
-Syncfly 0.2.2 is a standalone Windows x64 application. Docker is not required.
+Syncfly 0.2.3 is a standalone Windows x64 application. Docker is not required.
 
-- **Syncfly-Setup-0.2.2.exe** installs Syncfly for your Windows user and creates shortcuts.
-- **Syncfly-Portable-0.2.2.exe** runs without installation.
+- **Syncfly-Setup-0.2.3.exe** installs Syncfly for your Windows user and creates shortcuts.
+- **Syncfly-Portable-0.2.3.exe** runs without installation.
 - **SHA256SUMS.txt** contains the download checksums.
 
-This release includes the updated Windows project: named AI account profiles, up to ten independent workers, combined-result orchestration, private GitHub integration, shared reference uploads, and orchestrator-reviewed computer actions. It also fixes false usage-limit errors caused by rate-limit text in repository output.
+This release imports the 0.2.2 Windows project and restores sidebar scrolling so account controls remain reachable on smaller screens. It includes: named AI account profiles, up to ten independent workers, combined-result orchestration, private GitHub integration, shared reference uploads, and orchestrator-reviewed computer actions. It also fixes false usage-limit errors caused by rate-limit text in repository output.
 
 Create a local account on first launch. Install Git and the desired provider CLI, sign in, and verify it in Connections. Gemini API image generation requires your API key. Provider usage and billing remain separate.
 

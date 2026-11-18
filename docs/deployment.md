@@ -2,7 +2,7 @@
 
 ## Run on your Windows PC
 
-For the standalone Windows app, use the [release downloads](https://github.com/KhurshidbekUrazaliev/syncfly/releases/tag/v0.2.2). See [desktop setup and build instructions](../desktop/README.md). This version bundles its runtime, opens in a dedicated window, and uses native local execution without Docker. The Docker deployment below remains available for isolated runners.
+For the standalone Windows app, use the [release downloads](https://github.com/KhurshidbekUrazaliev/syncfly/releases/tag/v0.2.3). See [desktop setup and build instructions](../desktop/README.md). This version bundles its runtime, opens in a dedicated window, and uses native local execution without Docker. The Docker deployment below remains available for isolated runners.
 
 Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) with the **WSL 2 backend** and **Linux containers**, then start Docker Desktop. Docker Desktop is [free for personal use](https://docs.docker.com/subscription-billing/desktop-license/). Use a supported Windows version with hardware virtualization enabled and at least 8 GB of RAM. No Node or Python installation is required for this deployment.
 
