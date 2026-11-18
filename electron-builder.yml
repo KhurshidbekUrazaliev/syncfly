@@ -1,0 +1,25 @@
+appId: com.syncfly.desktop
+productName: Syncfly
+directories:
+  output: release
+files:
+  - desktop/main.cjs
+  - "*.mjs"
+  - dist/**/*
+  - package.json
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  signAndEditExecutable: false
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  artifactName: Syncfly-Setup-${version}.${ext}
+portable:
+  artifactName: Syncfly-Portable-${version}.${ext}

@@ -1,28 +1,26 @@
 {
   "name": "syncfly",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
     "dev": "node server.mjs",
     "test": "node --test test/*.test.mjs",
-    "check": "node --check server.mjs && node --check cloud.mjs && node --check dist/app.js && node --check dist/motion.js",
-    "test:browser": "playwright test"
+    "check": "node --check server.mjs && node --check dist/app.js",
+    "desktop": "electron .",
+    "package:win": "electron-builder --win --publish never",
+    "test:desktop": "node desktop/e2e.cjs"
   },
   "engines": {
     "node": ">=20"
   },
-  "description": "Self-hosted project management for coding agents.",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/KhurshidbekUrazaliev/syncfly.git"
-  },
-  "bugs": {
-    "url": "https://github.com/KhurshidbekUrazaliev/syncfly/issues"
-  },
-  "homepage": "https://github.com/KhurshidbekUrazaliev/syncfly#readme",
   "devDependencies": {
-    "@playwright/test": "^1.65.1"
-  }
+    "electron": "45.3.3",
+    "electron-builder": "26.18.0",
+    "playwright-core": "1.65.1"
+  },
+  "main": "desktop/main.cjs",
+  "description": "Syncfly personal AI agent workspace",
+  "author": "Khurshidbek Urazaliev"
 }

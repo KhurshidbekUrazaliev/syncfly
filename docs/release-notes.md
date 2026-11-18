@@ -1,20 +1,15 @@
-Download **Syncfly-Windows.zip** or **Syncfly-macOS.zip** below, then extract the entire archive.
+Syncfly 0.2.2 is a standalone Windows x64 application. Docker is not required.
 
-1. Install and start Docker Desktop (Linux containers).
-2. Open **Start Syncfly.cmd** on Windows or **Start Syncfly.command** on macOS.
-3. Wait for the initial build. The browser opens with your private setup code already supplied.
-4. Create your account, add a project, and connect an agent.
+- **Syncfly-Setup-0.2.2.exe** installs Syncfly for your Windows user and creates shortcuts.
+- **Syncfly-Portable-0.2.2.exe** runs without installation.
+- **SHA256SUMS.txt** contains the download checksums.
 
-If macOS does not open the script, run `bash scripts/macos.sh Start` in Terminal from the extracted folder. Windows users can run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows.ps1` from PowerShell.
+This release includes the updated Windows project: named AI account profiles, up to ten independent workers, combined-result orchestration, private GitHub integration, shared reference uploads, and orchestrator-reviewed computer actions. It also fixes false usage-limit errors caused by rate-limit text in repository output.
 
-Changes in this release:
+Create a local account on first launch. Install Git and the desired provider CLI, sign in, and verify it in Connections. Gemini API image generation requires your API key. Provider usage and billing remain separate.
 
-- Account setup opens directly, supports Enter to submit, and displays actionable errors.
-- The desktop launcher supplies the required invitation automatically.
-- Fresh accounts start with an empty workspace; example projects, fake tasks, and simulated activity have been removed.
-- Windows and macOS downloads include start and stop launchers.
-- Registration and saved work are covered by backend and browser regression tests.
+Close Syncfly before upgrading. Existing native desktop workspace data under `%APPDATA%/Syncfly/workspace` is retained. Docker/browser workspaces are not automatically migrated. The packages are unsigned and do not configure an automatic updater.
 
-To upgrade, stop the old copy, extract this release, copy `.env.desktop` from the old folder if present, then open the new launcher. The existing `syncfly_data` Docker volume is reused. Sign in with your existing account; do not delete the volume.
+The Windows desktop tests use fixture agents and temporary data; they do not verify the availability of your live provider accounts. The release is rebuilt from the imported source and tested in GitHub Actions before publication.
 
-These downloads are Docker-backed browser applications, not standalone native installers. Docker Desktop must remain running. Accounts and data stay on the host computer. Provider access and billing are separate. Live provider sign-ins and Docker Desktop execution should be verified on your machine; CI verifies the backend with Docker on Linux and tests launcher configuration on Windows and macOS.
+macOS users can continue using the separate [v0.2.0 Docker package](https://github.com/KhurshidbekUrazaliev/syncfly/releases/download/v0.2.0/Syncfly-macOS.zip). This release does not include a native macOS app.

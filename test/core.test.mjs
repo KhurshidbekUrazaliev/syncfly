@@ -16,7 +16,7 @@ test('host task count includes all users and in-flight starts without counting a
 
 test('provider arguments preserve prompts as single arguments and retain native permission controls',()=>{
  const prompt='text; $(touch /tmp/never)';
- for(const id of ['claude','codex','gemini','cursor']){const args=agentArgs(id,prompt);assert.ok(args.includes(prompt));assert.ok(!args.some(a=>/dangerously|yolo|--force/.test(a)));}
+ for(const id of ['claude','codex','antigravity','cursor']){const args=agentArgs(id,prompt);assert.ok(args.includes(prompt));assert.ok(!args.some(a=>/dangerously|yolo|--force/.test(a)));}
  assert.ok(agentArgs('codex','hello','',true).includes('read-only'));
  assert.throws(()=>agentArgs('unknown','hello'));
 });
@@ -27,7 +27,7 @@ test('tasks reject unknown providers, missing projects and cross-project depende
  assert.equal(validateTask({title:'test',projectId:'a',provider:'gemini-image'},s).aspectRatio,'1:1');
 });
 test('plans validate provider choices and reject forward/cyclic dependencies',()=>{
- const valid={tasks:[{title:'Research',provider:'gemini',dependsOn:[]},{title:'Build',provider:'codex',dependsOn:[0]}]};
+ const valid={tasks:[{title:'Research',provider:'antigravity',dependsOn:[]},{title:'Build',provider:'codex',dependsOn:[0]}]};
  assert.equal(parsePlan('```json\n'+JSON.stringify(valid)+'\n```')[1].dependsOn[0],0);
  assert.throws(()=>parsePlan(JSON.stringify({tasks:[{title:'Bad',provider:'codex',dependsOn:[0]}]})));
  assert.throws(()=>parsePlan('not json'));

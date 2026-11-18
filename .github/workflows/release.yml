@@ -1,22 +1,69 @@
-name: Desktop downloads
+name: Windows release
 on:
   push:
     tags: ['v*']
 permissions:
   contents: read
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm ci && npm test && npm run check
-      - run: python3 scripts/package-desktop.py
-      - name: Publish Windows and macOS downloads
+          cache: npm
+      - name: Verify release version
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_NAME -ne "v$version") { throw 'Tag does not match package version.' }
+      - run: npm ci
+      - run: npm test
+      - run: npm run check
+      - run: npm run package:win
+      - name: Test packaged application with fixture agents
+        shell: pwsh
+        run: |
+          $env:SYNCFLY_TEST_EXE = Join-Path $PWD 'release/win-unpacked/Syncfly.exe'
+          $env:SYNCFLY_TEST_REAL_CURSOR = '0'
+          npm run test:desktop
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Create checksums
+        shell: pwsh
+        run: |
+          $lines = Get-ChildItem release/Syncfly-*.exe | Sort-Object Name | ForEach-Object {
+            "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)"
+          }
+          [IO.File]::WriteAllLines((Join-Path $PWD 'release/SHA256SUMS.txt'), [string[]]$lines, [Text.UTF8Encoding]::new($false))
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            release/Syncfly-*.exe
+            release/Syncfly-*.exe.blockmap
+            release/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: desktop-test-diagnostics
+          include-hidden-files: true
+          path: |
+            .desktop-test-e2e-*/backend.log
+            .desktop-test-e2e-*/*.png
+  publish:
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: release
+      - name: Publish verified downloads
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" release/Syncfly-Windows.zip release/Syncfly-macOS.zip release/SHA256SUMS.txt --title "Syncfly $GITHUB_REF_NAME" --notes-file docs/release-notes.md --verify-tag
+        run: gh release create "$GITHUB_REF_NAME" release/* --title "Syncfly $GITHUB_REF_NAME for Windows" --notes-file docs/release-notes.md --verify-tag

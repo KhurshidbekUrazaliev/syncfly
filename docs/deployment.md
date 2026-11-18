@@ -1,90 +1,50 @@
 # Deployment
 
-Syncfly serves the frontend and API together. Use Docker Desktop on Windows or macOS, or Docker Engine on a Linux server. A static host displays download instructions because it cannot run the backend.
+## Run on your Windows PC
 
-## Windows and macOS
+For the standalone Windows app, use the [release downloads](https://github.com/KhurshidbekUrazaliev/syncfly/releases/tag/v0.2.2). See [desktop setup and build instructions](../desktop/README.md). This version bundles its runtime, opens in a dedicated window, and uses native local execution without Docker. The Docker deployment below remains available for isolated runners.
 
-Follow the [desktop quickstart](../README.md#download-and-run). Windows uses Linux containers through Docker Desktop's WSL 2 backend; macOS uses Docker Desktop's Linux VM. Node.js and Python are not required on the host for this setup.
+Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) with the **WSL 2 backend** and **Linux containers**, then start Docker Desktop. Docker Desktop is [free for personal use](https://docs.docker.com/subscription-billing/desktop-license/). Use a supported Windows version with hardware virtualization enabled and at least 8 GB of RAM. No Node or Python installation is required for this deployment.
 
-`-ExecutionPolicy Bypass` applies to the PowerShell process running the launcher. It does not change the system policy. The initial build downloads the provider CLIs and may take several minutes.
-
-### Configuration and storage
-
-The launcher creates `.env.desktop` with a random invitation code. Windows restricts it to the current user; macOS sets file permissions to `0600`. Start opens a setup URL with the code in the fragment. The browser removes the fragment immediately and uses the code only for registration; it is not sent in page requests. This file is excluded from Git and Docker builds.
-
-| Setting | Purpose |
-| --- | --- |
-| `RELAY_PUBLIC_URL` | Exact browser origin, without a trailing slash. |
-| `RELAY_HOST_DATA_DIR` | Linux mount point of the data volume; set by the launcher. |
-| `RELAY_INVITE_CODE` | Required when creating an account, including the first account. |
-| `RELAY_ALLOW_SIGNUP` | Controls registration after the first account; defaults to `false`. |
-| `RELAY_MAX_ACTIVE_TASKS` | Host-wide task limit; defaults to `1` in the desktop configuration. |
-
-User data, provider credentials, images, and repository checkouts are stored in the `syncfly_data` Docker volume. Agent containers receive their own provider directory and task checkout. Increase the task limit only when the host has sufficient memory; each runner has a 2 GB memory limit and a 2 CPU limit. Rerun `Start` after editing configuration.
-
-### Management commands
-
-Run the launcher with the desired action:
+Clone this repository or download and extract its ZIP. Open PowerShell in the project folder and run:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows.ps1 -Action Status
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows.ps1 -Action Start
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows.ps1 -Action Invitation
 ```
 
-| Action | Result |
-| --- | --- |
-| `Start` | Build and start Syncfly, then open account setup or sign-in. |
-| `Status` | Show container status. |
-| `Logs` | Show recent backend logs. |
-| `Stop` | Stop containers and retain stored data. |
-| `Invitation` | Display the signup code. |
-| `OpenInvites` | Allow registrations with the signup code. |
-| `CloseInvites` | Disable further registrations. |
-| `Private` | Configure private HTTPS access through Tailscale. |
-| `Local` | Stop remote access and restore the localhost origin. |
+`ExecutionPolicy Bypass` applies only to that PowerShell process; it does not change the machine's execution policy. Review the script before running it. The first build downloads the official agent CLIs and can take several minutes.
 
-On macOS, the same local management actions use:
+Open **http://localhost:4310** on that PC. Create your first Syncfly account using the private invitation code displayed by the second command. Keep that code private. Subsequent registrations are disabled until you enable them.
 
-```sh
-bash scripts/macos.sh Status
-bash scripts/macos.sh OpenInvites
-bash scripts/macos.sh Invitation
-bash scripts/macos.sh CloseInvites
-```
+The launcher creates `.env.desktop` with a random invitation code and restricts file access to the current Windows user. This file is excluded from Git and image builds. User data, API keys, agent sign-ins, and repository checkouts live in the `syncfly_data` Docker volume. The launcher discovers the volume's Linux mount point so sibling agent containers can access the correct task directory; it does not mount your Windows home directory into agents. The desktop configuration allows **one running task across all users** by default. Increase `RELAY_MAX_ACTIVE_TASKS` in `.env.desktop` only if your PC has enough memory, then rerun `Start`.
 
-`Private` and `Local` are currently Windows launcher actions. The macOS package provides local access only; a server or separately configured private network is needed for remote use.
+### Private access for invited testers
 
-### Account setup troubleshooting
-
-- **Invitation code required:** open the new Start Syncfly launcher instead of typing localhost manually. It supplies the code automatically. If you use a manually opened tab, use the `Invitation` action to retrieve the code.
-- **Registration closed:** an account already exists. Sign in with it, or ask the owner to run `OpenInvites` before creating another account.
-- **Still seeing the old example board:** stop the older copy, run Start from the new release folder, and reload the browser. No example projects or tasks are included in current releases. Old browser-only example data is discarded; server projects are preserved.
-- **Backend unavailable:** check Docker Desktop is running. Run `Status` or `Logs` for details, then run `Start` again.
-- **Wrong address:** use the URL printed by the launcher. If private access was enabled, sign in through its HTTPS address.
-
-### Private remote access
-
-Install [Tailscale](https://tailscale.com/download) on the host PC and each client device. Invite users to your Tailscale network, then run:
+For a personal, non-commercial pilot, [Tailscale's Personal plan](https://tailscale.com/docs/account/manage-plans/free-plans-discounts) includes six users. Install Tailscale on the Windows PC and each tester's device. Testers must be invited to your private Tailscale network as well as receive a Syncfly invitation code.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows.ps1 -Action Private
 ```
 
-The first run displays a Tailscale device sign-in link. Complete sign-in, then run the command again. If prompted, enable HTTPS using the link Tailscale provides and rerun the command.
+The first run displays a Tailscale device sign-in link. Complete sign-in in your browser, then run the same command again. If Tailscale asks you to enable HTTPS, follow its link and rerun the command. It prints the private `https://syncfly.<your-network>.ts.net` address and configures Syncfly to use it. Use that address after enabling private access; the localhost sign-in origin is replaced. This uses [Tailscale Serve](https://tailscale.com/docs/reference/tailscale-cli/serve), which is private to your network. It does not enable public Funnel access or open a router port.
 
-Use the printed `https://syncfly.<your-network>.ts.net` address to access Syncfly. The launcher replaces the localhost sign-in origin with this address. [Tailscale Serve](https://tailscale.com/docs/reference/tailscale-cli/serve) restricts access to your private network; the configuration does not enable public Funnel access.
+Open registration while onboarding your trusted testers, then close it:
 
-To onboard users, run `OpenInvites`, share the Syncfly invitation code privately, and run `CloseInvites` once they have registered. Existing users can continue signing in after registration closes. The host PC must remain awake with Docker Desktop running.
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows.ps1 -Action OpenInvites
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows.ps1 -Action CloseInvites
+```
 
-## Linux server
+Use `-Action Status` to check containers, `Logs` for backend output, `Stop` to stop Syncfly without deleting data, and `Local` to stop private access and restore localhost mode. Keep the Windows PC awake and Docker Desktop running while testers use it. Back up the data volume before resetting Docker Desktop or deleting volumes.
 
-Requirements:
+Free hosting does not include provider subscriptions or paid API usage. In **Connections**, sign in through supported official CLIs and add a Gemini API key for image generation. Verify one small task with each provider before inviting testers. Windows execution, private network access, and real provider sign-ins still require validation on your Windows PC.
 
-- Docker Engine and the Compose plugin.
-- Python 3 for the configuration script.
-- A hostname pointing to the server and inbound ports 80 and 443.
-- Outbound access to provider APIs and supported Git hosts.
+## Guided cloud deployment
 
-Clone the repository on the server. From its root directory, run:
+The production override includes Caddy HTTPS, persistent certificates, an agent-runner readiness check, bounded container logs, and invitation-protected registration. It requires a Linux server with Docker Engine and Compose, a domain pointing to that server, and inbound ports 80/443. Server access and DNS are not provisioned by this repository.
+
+On that server, from this project folder:
 
 ```sh
 python3 scripts/configure-cloud.py --domain syncfly.example.com --data-dir /opt/syncfly/data
@@ -92,37 +52,45 @@ sudo mkdir -p /opt/syncfly/data
 ./scripts/deploy.sh
 ```
 
-Replace `syncfly.example.com` with your hostname. Run the deployment script as a user with Docker access.
+The configuration script creates `.env` with mode 0600 and a random invitation code, and refuses to overwrite an existing configuration. Read the code privately from that file to create the first account. It is not printed in deployment logs. Keep registrations disabled after the first account; enable `RELAY_ALLOW_SIGNUP=true` temporarily to invite trusted testers who have the code. This is a shared pilot access code, not verified-email identity or a public signup system.
 
-The configuration script creates `.env` with mode `0600` and refuses to overwrite an existing file. The deployment script combines `compose.yaml` and `compose.production.yaml` to start the app and Caddy. Caddy manages HTTPS certificates; the app port is bound to the host's loopback interface.
+Validate `https://YOUR_DOMAIN/readyz`, sign in, connect one provider, and run a small task before opening the pilot. The app and API are served together on your own domain. The hosted Syncfly website provides downloads and setup instructions. Back up the host data directory and Caddy certificate volume before upgrades. No cloud deployment or real provider execution has yet been verified.
 
-Open your HTTPS URL and create the first account using the invitation code in `.env`. To register additional users, temporarily set `RELAY_ALLOW_SIGNUP=true` and recreate the app container:
+References: [Docker production overrides](https://docs.docker.com/compose/how-tos/production/), [Caddy automatic HTTPS](https://caddyserver.com/docs/automatic-https).
 
-```sh
-docker compose -f compose.yaml -f compose.production.yaml up -d
-```
+## Cloud deployment (Linux Docker host)
 
-Set the value back to `false` and repeat the command after onboarding. The invitation code is shared between invited users; email verification is not implemented.
+Requirements: Docker Engine + Compose plugin, an HTTPS domain/reverse proxy, outbound access to AI providers and Git hosts, and adequate RAM for the desired concurrency (runner cap: 2 GB and 2 CPUs per container). This package is for a self-hosted, trusted team, not open public multi-tenant SaaS.
 
-For an existing reverse proxy, `compose.yaml` provides the base service on `127.0.0.1:4310`. Supply the exact HTTPS origin through `RELAY_PUBLIC_URL`. The production override adds invitation enforcement, health checks, and bounded logs; include equivalent settings when replacing it.
+1. Copy this directory to your server. Copy `.env.example` to `.env`.
+2. Set `RELAY_HOST_DATA_DIR` to an absolute path on that server, such as `/opt/relay/data`. Create that directory. Set `RELAY_PUBLIC_URL` to your exact HTTPS origin (no trailing slash).
+3. Run:
 
-## Connect providers and run tasks
+   ```sh
+   docker compose up -d --build
+   ```
 
-1. Open **Connections** and follow the provider's CLI sign-in flow. For images, add a Gemini API key from Google AI Studio.
-2. Create a project. Coding tasks require a public HTTPS repository on GitHub, GitLab, or Bitbucket. Planning and image tasks can run without a repository.
-3. Create tasks directly or use **Plan with AI** to request proposed assignments and dependencies.
-4. Review the plan, start tasks, and inspect their output. Approve prerequisites before starting dependent tasks.
-5. Review and merge code changes separately. Task approval does not merge a branch.
+4. Proxy your domain to `127.0.0.1:4310`. For Caddy running on the host:
 
-Provider billing and usage limits apply independently of Syncfly. Run a small task with each provider to validate sign-in and permissions on the deployment host.
+   ```caddy
+   relay.example.com {
+       reverse_proxy 127.0.0.1:4310
+   }
+   ```
 
-## Health and backups
+5. Create the first account immediately. By default, subsequent registrations are disabled. To onboard a trusted team, temporarily set `RELAY_ALLOW_SIGNUP=true`, recreate the app container, then disable registrations again.
+6. Add a project. Public HTTPS repositories from GitHub, GitLab, and Bitbucket are supported; a repository is optional for planning and images. The native desktop app also supports private GitHub repositories through GitHub CLI authentication.
+7. Open Connections. Start each desired provider’s official sign-in flow, follow its link/code, and verify. For Gemini images, add your API key from Google AI Studio. Provider usage and API charges remain your responsibility.
+8. Choose **Plan with AI**, select a connected lead, describe your goal, then review and accept its proposed tasks. Start ready tasks from their detail panels. Tasks can be reassigned before execution.
 
-`/healthz` checks that the web service is responding. `/readyz` also checks whether the Docker runner image is available and returns `503` when it is unavailable. Neither endpoint verifies provider credentials.
+You may use `http://localhost:4310` as `RELAY_PUBLIC_URL` through an SSH tunnel during initial setup. Never expose account/password login over public plain HTTP.
 
-Back up configuration and application data before upgrades or host resets:
+### Runner architecture
 
-- Desktop: `.env.desktop`, `syncfly_data`, and the Tailscale state volume.
-- Linux: `.env`, the configured host data directory, and Caddy's certificate volume.
+The web service has Docker socket access so it can create sibling runner containers. This makes the web service a trusted administrative component. Never expose this deployment to untrusted public registrations. Provider containers do not receive the Docker socket, server data, or other users’ credentials. Each receives only its own provider HOME and task checkout, drops Linux capabilities, runs as UID 1000, uses a read-only root filesystem, and has resource limits.
 
-Backups contain provider credentials and should be encrypted and access-controlled. Stopping the containers retains their data; deleting Docker volumes removes it. Review the [execution and security model](architecture.md#execution-and-security) before adding users.
+Containers need outbound network access to providers; network access is not an SSRF/metadata sandbox. On a cloud VM, restrict runner access to instance metadata and private infrastructure using host/network firewall rules before using untrusted repositories. API keys and CLI credential files are stored in owner-restricted server files, not encrypted with a separate KMS. Protect and encrypt your data volume and backups. The server operator is trusted.
+
+A cloud task uses an isolated standalone clone (rather than a linked worktree, whose Git metadata would cross the container boundary). The task’s checkout path and branch are shown in the review panel. Inspect new/untracked files in that checkout. Review and merge changes on the server or export a patch; approving a task does not merge or push it. Downstream agents receive prerequisite summaries, not automatically merged source changes. Merge prerequisite code into the project’s base repository before starting dependent coding tasks that need it.
+
+On Windows, Claude Code Sonnet reviews native Claude/Cursor/Antigravity permission requests and Syncfly computer actions automatically. It uses the project’s named Claude orchestrator account when selected, otherwise the default Claude login. Decisions are recorded in worker logs. Denied, unavailable, or timed-out reviews do not execute the action; no manual approval dialog is opened. Computer access still must be enabled for the task and can be revoked. Codex retains its native workspace sandbox; OS and provider account restrictions still apply. Cloud runners retain their provider permission controls. Result/plan acceptance and publishing remain separate workflow actions. CLI authentication/version differences may require updating the adapter. Runner images install current vendor CLIs at build time; pin tested versions before a stable deployment.

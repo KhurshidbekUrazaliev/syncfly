@@ -1,0 +1,27 @@
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { spawn, execFileSync } from 'node:child_process';
+import { resolveNativeCLI } from '../native-cli.mjs';
+import { agentArgs } from '../server.mjs';
+import { accountEnvironment } from '../provider-accounts.mjs';
+import { spawnACP } from '../acp-runner.mjs';
+import { spawnClaude } from '../claude-runner.mjs';
+const root=await fs.mkdtemp(path.resolve('.live-smoke-'));
+const results=await Promise.all((process.env.SYNCFLY_LIVE_PROVIDERS||'claude,codex,cursor,antigravity').split(',').map(async provider=>{
+ const cwd=path.join(root,provider);await fs.mkdir(cwd);await fs.writeFile(path.join(cwd,'input.txt'),'SYNCFLY_PARALLEL_TEST');
+ await fs.writeFile(path.join(cwd,'verify.cjs'),"const fs=require('fs');if(fs.readFileSync('result.txt','utf8').trim()!=='SYNCFLY_PARALLEL_TEST')process.exit(1);fs.writeFileSync('verified.json',JSON.stringify({passed:true}));console.log('CHECK_PASSED');");
+ execFileSync('git',['init',cwd],{stdio:'ignore'});
+ execFileSync('git',['-C',cwd,'add','.']);execFileSync('git',['-C',cwd,'-c','user.name=Syncfly Test','-c','user.email=test@localhost','commit','-m','Test inputs'],{stdio:'ignore'});
+ const cli=await resolveNativeCLI([provider==='cursor'?'agent':provider==='antigravity'?'agy':provider]);
+ if(!cli)return {provider,error:'Not installed'};
+ const prompt='This is an authorized Syncfly integration smoke test in a disposable folder. Read input.txt, create result.txt containing exactly its text, and run node verify.cjs. Only access files in this folder. Do not use browser, network tools, git remote operations, or any other project. Report CHECK_PASSED only if verification succeeds.';
+ const fixed=process.env.SYNCFLY_LIVE_FIXED==='1',start=Date.now(),env=fixed?await accountEnvironment(root,null):{...process.env};for(const key of ['ANTHROPIC_API_KEY','OPENAI_API_KEY','GOOGLE_API_KEY','GEMINI_API_KEY'])delete env[key];
+ const approvals=[];const approve=async details=>{approvals.push(details);console.log('PERMISSION',provider,JSON.stringify(details));const call=details.toolCall||{};const raw=call.rawInput||details.input||{};const command=raw.command||raw.CommandLine||raw.commandLine;
+  if(command)return ['node verify.cjs',"printf 'SYNCFLY_PARALLEL_TEST' > result.txt && node verify.cjs",'cp input.txt result.txt && node verify.cjs','cat input.txt > result.txt && node verify.cjs'].includes(command.trim());
+  const paths=[...(call.locations||[]).map(l=>l.path),raw.path,raw.Path,raw.filePath,raw.file_path].filter(Boolean);return (['read','edit'].includes(call.kind)||['Read','Write','Edit'].includes(details.tool))&&paths.length>0&&paths.every(p=>path.resolve(p).startsWith(cwd+path.sep));
+ };
+ return new Promise(resolve=>{const child=fixed&&['antigravity','cursor'].includes(provider)?spawnACP(cli,{cwd,env,provider,prompt:prompt+' Use file read/edit tools and run the verification command exactly: node verify.cjs.',approve}):fixed&&provider==='claude'?spawnClaude(cli,{cwd,env,args:agentArgs(provider,prompt,'sonnet'),prompt,approve}):spawn(cli.file,[...cli.args,...agentArgs(provider,prompt)],{cwd,env,windowsHide:true,stdio:['ignore','pipe','pipe']});let output='';
+ child.stdout.on('data',c=>output+=c);child.stderr.on('data',c=>output+=c);const timer=setTimeout(()=>{if(process.platform==='win32')spawn('taskkill',['/PID',String(child.pid),'/T','/F'],{windowsHide:true});else child.kill();},150000);
+ child.on('error',e=>output+='\n'+e.message);child.on('close',async code=>{clearTimeout(timer);await fs.writeFile(path.join(cwd,'run.log'),output);let verified=false;try{verified=JSON.parse(await fs.readFile(path.join(cwd,'verified.json'),'utf8')).passed===true;}catch{}resolve({provider,code,verified,approvals,start,elapsedMs:Date.now()-start,tail:output.slice(-2600)});});
+ });
+}));await fs.writeFile(path.join(root,'results.json'),JSON.stringify(results,null,2));console.log(JSON.stringify({root,results},null,2));

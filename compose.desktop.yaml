@@ -1,4 +1,4 @@
-# Docker Desktop on Windows or macOS. Tailscale is optional private access.
+# Docker Desktop with Linux containers. Tailscale is optional private access.
 name: syncfly
 services:
   runner-image:
@@ -15,7 +15,7 @@ services:
         condition: service_completed_successfully
     environment:
       RELAY_PUBLIC_URL: ${RELAY_PUBLIC_URL:-http://localhost:4310}
-      RELAY_HOST_DATA_DIR: ${RELAY_HOST_DATA_DIR:?Open Start Syncfly to generate configuration}
+      RELAY_HOST_DATA_DIR: ${RELAY_HOST_DATA_DIR:?Run scripts/windows.ps1 first}
       RELAY_INVITE_CODE: ${RELAY_INVITE_CODE:?Generate local configuration first}
       RELAY_ALLOW_SIGNUP: ${RELAY_ALLOW_SIGNUP:-false}
       RELAY_MAX_ACTIVE_TASKS: ${RELAY_MAX_ACTIVE_TASKS:-1}

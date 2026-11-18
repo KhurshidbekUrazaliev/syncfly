@@ -1,5 +1,9 @@
 .runtime/
 node_modules/
+release/
+.desktop-test/
+.desktop-test-portable/
+.desktop-test-e2e-*/
 .DS_Store
 *.tar.gz
 
@@ -9,6 +13,10 @@ node_modules/
 .openai/
 *.zip
 *.log
-test-results/
-playwright-report/
-release/
+
+.live-smoke-*/
+
+*.exe
+*.blockmap
+*.bundle
+._*

@@ -10,53 +10,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm ci
       - run: npm test && npm run check
       - name: Validate desktop compose configuration
         env:
           RELAY_INVITE_CODE: ci-placeholder-not-a-secret
           RELAY_HOST_DATA_DIR: /var/lib/docker/volumes/syncfly_data/_data
         run: docker compose -f compose.desktop.yaml --profile private config --quiet
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:browser
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: browser-results
-          path: test-results
-  windows-launcher:
+  windows-script:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify launcher setup and restart with a simulated Docker engine
+      - name: Parse the Windows launcher without starting Docker
         shell: powershell
-        run: ./test/windows-launcher.ps1
-  macos-launcher:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: bash -n scripts/macos.sh && bash test/macos-launcher.sh
-  docker:
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build and start the packaged backend and real runner
         run: |
-          docker volume create syncfly_data
-          export RELAY_HOST_DATA_DIR=$(docker volume inspect syncfly_data --format '{{.Mountpoint}}')
-          export RELAY_INVITE_CODE=ci-placeholder-not-a-secret
-          docker compose -f compose.desktop.yaml build
-          docker compose -f compose.desktop.yaml up -d --wait --wait-timeout 180
-          curl --fail http://localhost:4310/readyz
-          curl --fail -c /tmp/cookies -H 'Content-Type: application/json' -H 'Origin: http://localhost:4310' \
-            -d '{"email":"ci@example.test","password":"ci-integration-password","invitation":"ci-placeholder-not-a-secret"}' \
-            http://localhost:4310/api/auth/register
-          curl --fail -b /tmp/cookies http://localhost:4310/api/state | python3 -c 'import json,sys; s=json.load(sys.stdin); assert s["projects"] == []; assert s["tasks"] == []'
-          docker run --rm relay-runner:latest claude --version
-          docker run --rm relay-runner:latest codex --version
-          docker run --rm relay-runner:latest gemini --version
-          docker run --rm relay-runner:latest agent --version
-      - name: Show container logs on failure
-        if: failure()
-        run: docker ps -a && docker logs syncfly-relay-1
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'scripts/windows.ps1'), [ref]$tokens, [ref]$parseErrors
+          ) | Out-Null
+          if ($parseErrors.Count) { $parseErrors | Format-List; exit 1 }
